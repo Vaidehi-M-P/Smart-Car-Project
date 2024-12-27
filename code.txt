@@ -1,0 +1,109 @@
+#include <LiquidCrystal_I2C.h>
+const int trigPin = 12;//d6
+const int echoPin = 14;//d5
+const int buzzer = D0;//D1D2 lcd
+//define sound velocity in cm/uS
+#define SOUND_VELOCITY 0.034
+#define CM_TO_INCH 0.393701
+
+long duration;
+float distanceCm;
+float distanceInch;
+
+#define LDR A0
+#define led D7// high beam BULB// red
+#define ledl D8// Low beam LED// green
+
+int lcdColumns = 16;
+int lcdRows = 2;
+
+int volt_digital = D3;
+LiquidCrystal_I2C lcd(0x27, 16,2);
+void setup() {
+  lcd.init();
+  // turn on LCD backlight         
+    lcd.clear();             
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("SMART CAR");
+  delay(3000);
+  lcd.clear();
+  Serial.begin(115200); // Starts the serial communication
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  pinMode(buzzer, OUTPUT);
+  pinMode(LDR, INPUT);
+  pinMode(led, OUTPUT);
+  pinMode(ledl, OUTPUT);
+  pinMode(volt_digital, INPUT);
+  delay(100);
+}
+
+void loop() {
+  int light = analogRead(A0);
+  Serial.println(light);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Light:");
+  lcd.print(light);
+  lcd.print(" ");
+  
+  if (light < 50) // High Beam Light
+  {
+    digitalWrite(led, HIGH);
+    digitalWrite(ledl, LOW);
+     lcd.print("H");
+  }
+  else if ( light < 150) // LOW Beam Light
+  {
+    digitalWrite(ledl, HIGH);
+    digitalWrite(led , LOW);
+     lcd.print("L");
+  }
+  else // No light
+  {
+    digitalWrite(ledl, LOW);
+    digitalWrite(led, LOW);
+     lcd.print("No");
+  }
+
+
+  int VoltDigital = digitalRead(volt_digital);
+  Serial.println(VoltDigital);
+
+
+  // Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+
+  // Calculate the distance
+  distanceCm = duration * SOUND_VELOCITY / 2;
+
+  // Convert to inches
+  distanceInch = distanceCm * CM_TO_INCH;
+
+  if (distanceCm < 50) {
+       lcd.setCursor(0, 1);
+  lcd.print("Dist:");
+  lcd.print(distanceCm);
+  lcd.print("  ");
+    digitalWrite(buzzer, HIGH);
+    delay(distanceCm * 25);
+    digitalWrite(buzzer, LOW);
+  }
+  //   Prints the distance on the Serial Monitor
+  Serial.print("Distance (cm): ");
+  Serial.println(distanceCm);
+
+  //    Serial.print("Distance (inch): ");
+  //    Serial.println(distanceInch);
+  delay(250);
+
+}
